@@ -49,7 +49,7 @@ def preprocessing():
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
     directories = ["binance", "coinbase", "coinmarketcap", "robin"]
-    base_path = "/Users/leelakrishna/Desktop/ai-docs/"
+    base_path = "/Users/leelakrishna/Desktop/ai-docs/AI-search-bot/documents/v2"
 
     # Iterate through each directory
     for each_directory in directories:

@@ -1,0 +1,15 @@
+is that a private endpoint and should i have to pass any signature to it?
+
+CoinMarketCap:
+how to use listings endpoint defined in coinmarket cap
+
+Coinbase:
+Which endpoint enables me to resend a pending money request to a recipient in coinbase
+
+
+
+Robinhood:
+which endpoint helps me to fetch the account details from robinhood
+which endpoint helps me to Fetch a list of orders for the current user in robinhood
+
+

@@ -1,0 +1,1112 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Coinbase API",
+    "description": "The Coinbase v2 API",
+    "version": "2.0.0",
+    "contact": {
+      "name": "CoinFabrik",
+      "url": "http://www.coinfabrik.com/"
+    }
+  },
+  "host": "api.coinbase.com",
+  "schemes": ["https"],
+  "basePath": "/v2",
+  "produces": ["application/json"],
+  "security": [
+    {
+      "coinbaseAccessCode": []
+    }
+  ],
+  "paths": {
+    "/users/{user_id}": {
+      "get": {
+        "summary": "Retrieve User Information",
+        "description": "This endpoint allows you to fetch detailed public information about any user by their unique user ID. It is particularly useful for applications that need to display or process user profiles based on their IDs. The response includes a comprehensive dataset containing user attributes as defined in the User schema. This is a read-only operation and does not expose sensitive or private user information.\n\n### Use Cases:\n- Fetching user data for profile display.\n- Verifying user existence and associated attributes.\n- Supporting frontend UI/UX for user-centric features.\n\n### Endpoint Details:\n- Requires a valid `user_id` as a path parameter.\n- Returns data in JSON format structured according to the User schema.\n\n### Important Notes:\n- Ensure the `user_id` parameter is valid and corresponds to an existing user.\n- This operation is secured via the `coinbaseAccessCode` authentication mechanism to protect user data integrity.\n- Access is limited to public information as per the system's security and privacy policies.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "description": "The unique identifier of the user whose public information is being requested. This parameter must be a valid string representing an existing user within the system.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "security": [
+          {
+            "coinbaseAccessCode": []
+          }
+        ],
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "A successful response containing the requested user's public information in a structured format. The response is compliant with the User schema and includes detailed attributes for the user.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user": {
+      "get": {
+        "summary": "Retrieve Current User Information",
+        "description": "This endpoint fetches public details about the currently authenticated user. To access sensitive or private information, such as the user's email address or other private attributes, additional permissions `wallet:user:email` and `wallet:user:read` must be included in the authentication scope.\n\n### Use Cases:\n- Retrieve basic public profile data for the authenticated user.\n- Validate the currently logged-in user's identity and display profile-related details.\n\n### Key Features:\n- Requires authentication using the `coinbaseAccessCode` security mechanism.\n- Limited to public information unless specific permissions are granted.\n\n### Important Notes:\n- Ensure the user is authenticated to make this request.\n- If additional permissions are required, the API will return an error specifying the missing scopes.",
+        "security": [
+          {
+            "coinbaseAccessCode": []
+          }
+        ],
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "A successful response with the public information of the currently authenticated user. The response structure adheres to the `User` schema and includes public user details.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Current User Preferences",
+        "description": "This endpoint allows modification of the currently authenticated user's profile details and preferences. Users can update their name, time zone, and preferred native currency, among other customizable settings. It requires the `wallet:user:update` scope in the authentication token.\n\n### Use Cases:\n- Update user preferences such as time zone or currency for better localization.\n- Modify profile details such as the user’s name.\n\n### Key Features:\n- Requires `wallet:user:update` permission for authentication.\n- Allows flexible updates by specifying only the properties to modify in the request body.\n\n### Example Usage:\n- To change the user's name, include the `name` property in the request body.\n- To update multiple fields simultaneously, pass all the desired properties in a single request.\n\n### Important Notes:\n- Partial updates are supported, so only the fields provided in the request body will be updated.\n- Ensure valid input values to avoid validation errors.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:user:update"]
+          }
+        ],
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "The properties of the user profile to be updated. Provide only the fields you wish to modify.",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The user's full name to be updated."
+                },
+                "time_zone": {
+                  "type": "string",
+                  "description": "The preferred time zone of the user, e.g., 'America/New_York'."
+                },
+                "native_currency": {
+                  "type": "string",
+                  "description": "The user's preferred currency for displaying values, e.g., 'USD'."
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response containing the updated user information. The updated fields will be reflected in the response, adhering to the `User` schema.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/auth": {
+      "get": {
+        "summary": "Retrieve Authorization Information",
+        "description": "This endpoint retrieves the current user's OAuth2 authorization information, including the granted scopes and associated metadata such as send limits. It helps developers and users understand what permissions have been granted and the access level of the authenticated token.\n\n### Use Cases:\n- Determine which OAuth2 scopes have been granted to the authenticated user.\n- View metadata related to the user's authorization, such as send limits or other restrictions.\n- Validate the permissions available to ensure API calls comply with user consent and security protocols.\n\n### Key Features:\n- Provides detailed insight into the authorization context of the current session.\n- Returns a list of granted scopes, making it easier to debug and confirm OAuth2 access configurations.\n\n### Example Usage:\n- If a user has granted the `wallet:transactions:read` scope, this will be included in the response under `scopes`.\n- Additional metadata about the authorization process, such as token information or restrictions, can be found in the `oauth_meta` field.\n\n### Important Notes:\n- This endpoint requires an authenticated session using a valid `coinbaseAccessCode`.\n- The response structure is helpful for audit trails, debugging, and ensuring the correct permissions are applied during API interactions.",
+        "security": [
+          {
+            "coinbaseAccessCode": []
+          }
+        ],
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "A successful response containing the user's authorization details. This includes the authentication method, granted scopes, and additional OAuth2 metadata.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "method": {
+                      "type": "string",
+                      "description": "The method of authentication, typically OAuth2 or API key."
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "A list of granted OAuth2 scopes associated with the authenticated session. For example, 'wallet:user:read' or 'wallet:transactions:read'."
+                      },
+                      "description": "The scopes define the permissions granted to the authenticated token for accessing API endpoints."
+                    },
+                    "oauth_meta": {
+                      "type": "object",
+                      "description": "Additional metadata about the OAuth2 session, such as token expiration, rate limits, or other contextual information."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts": {
+      "get": {
+        "summary": "Retrieve a List of Accounts",
+        "description": "This endpoint retrieves a list of all accounts associated with the currently authenticated user that the authorization method has access to.\n\n### Use Cases:\n- View all accounts linked to the authenticated user, including wallets, vaults, or other account types.\n- Fetch account details for further interactions, such as initiating transactions or checking balances.\n\n### Key Features:\n- Provides account data with pagination support for large datasets.\n- Requires the `wallet:accounts:read` permission to access this endpoint.\n\n### Important Notes:\n- The endpoint respects the permissions granted by the OAuth2 token. If the token lacks sufficient scope, access will be restricted.\n- Paginated results allow developers to handle large datasets effectively, with additional pagination metadata provided.\n\n### Example Response:\n- Returns an array of accounts, with each entry representing an account object containing fields such as name, balance, and account type.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:accounts:read"]
+          }
+        ],
+        "tags": ["Accounts"],
+        "responses": {
+          "200": {
+            "description": "A successful response containing the user's accounts and pagination metadata.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "pagination": {
+                  "$ref": "#/definitions/Pagination",
+                  "description": "Pagination metadata for navigating through the list of accounts."
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Account",
+                    "description": "Each account object includes detailed information about the account, such as its type, balance, and name."
+                  },
+                  "description": "An array of account objects representing the user's accounts."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a New Account",
+        "description": "This endpoint allows the creation of a new account for the authenticated user. The account can represent a wallet, vault, or other custom-defined entity.\n\n### Use Cases:\n- Create a new wallet or account for storing cryptocurrencies.\n- Set up a vault account for enhanced security.\n- Add a custom-named account for organizing user holdings.\n\n### Key Features:\n- Requires the `wallet:accounts:create` permission to access this functionality.\n- Allows the user to specify an account name during creation.\n\n### Example Usage:\n- A user might create an account named 'Savings Wallet' for long-term cryptocurrency storage.\n- Custom accounts can be defined for different purposes, such as trading, savings, or expenses.\n\n### Important Notes:\n- Account properties, such as the name, can be specified in the request body.\n- Only authorized users with the correct permissions can use this endpoint.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:accounts:create"]
+          }
+        ],
+        "tags": ["Accounts"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "account_properties",
+            "description": "The properties of the account to be created. The name field allows for custom account naming.",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the account being created. This is useful for organizing user accounts with meaningful labels."
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A successful response indicating the newly created account.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/Account",
+                  "description": "Details of the newly created account, including its ID, name, and associated metadata."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}": {
+      "get": {
+        "summary": "Retrieve Account Details",
+        "description": "Fetch detailed information for a specific account associated with the authenticated user. You can also use the keyword `primary` instead of the `account_id` in the URL to access the user's primary account.\n\n### Use Cases:\n- Retrieve details of a specific account to check its status, balance, or other metadata.\n- Access the primary account without needing its specific `account_id`.\n\n### Key Features:\n- Provides account data including its type, balance, and other relevant details.\n- Supports querying both by `account_id` and the `primary` keyword for convenience.\n\n### Important Notes:\n- Requires the `wallet:accounts:read` permission to access this endpoint.\n- Ensure the `account_id` or the `primary` keyword is correctly formatted in the URL path.\n\n### Example Usage:\n- Use this endpoint to fetch account details before performing transactions or updates.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:accounts:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account. Alternatively, use the `primary` keyword for the user's primary account.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": ["Accounts"],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved account details.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/Account",
+                  "description": "Detailed information about the account."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Account Name",
+        "description": "Update the name of a specific account associated with the authenticated user.\n\n### Use Cases:\n- Modify the account name to reflect a new purpose or usage.\n- Update account metadata for better organization.\n\n### Key Features:\n- Allows changing the account name through a simple request.\n- Requires the `wallet:accounts:update` permission.\n\n### Important Notes:\n- Ensure the `account_id` is correctly formatted in the URL path.\n- The request body should include the new name for the account.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:accounts:update"]
+          }
+        ],
+        "tags": ["Accounts"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account to be updated.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "account_properties",
+            "description": "The new properties to be applied to the account.",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The new name for the account."
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account name successfully updated.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/Account",
+                  "description": "The updated account details."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an Account",
+        "description": "Permanently delete a specified account associated with the authenticated user.\n\n### Use Cases:\n- Remove an inactive or redundant account.\n- Streamline account management by deleting unused accounts.\n\n### Key Features:\n- Enforces strict rules to prevent accidental deletion of critical accounts.\n- Requires the `wallet:accounts:delete` permission.\n\n### Important Notes:\n- The account cannot be deleted if it is:\n  - The primary account.\n  - An account with a non-zero balance.\n  - A fiat account.\n  - A vault account with a pending withdrawal.\n- Ensure the `account_id` is correctly formatted in the URL path.\n- Deleted accounts cannot be recovered.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:accounts:delete"]
+          }
+        ],
+        "tags": ["Accounts"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account to be deleted.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Account successfully deleted. No content returned."
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/primary": {
+      "get": {
+        "summary": "Set an Account as Primary",
+        "description": "Promote a specified account to be the primary account for the authenticated user.\n\n### Use Cases:\n- Designate a new primary account for managing transactions.\n- Update the primary account when an old one becomes inactive or less frequently used.\n\n### Key Features:\n- Ensures that the specified account is set as the default account for the user.\n- Provides a seamless way to prioritize accounts based on user preferences.\n\n### Important Notes:\n- Requires the `wallet:accounts:update` permission to make changes.\n- The `account_id` must belong to the authenticated user.\n- Only one account can be designated as primary at a time; the previously set primary account will automatically be demoted.\n- Ensure the `account_id` is valid and correctly formatted in the URL path.\n\n### Example Usage:\nUse this endpoint to change the user's default account to a more active or preferred account.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:accounts:update"]
+          }
+        ],
+        "tags": ["Accounts"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account to be promoted to primary.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The specified account has been successfully set as primary.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/Account",
+                  "description": "Details of the updated account, now set as primary."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/addresses": {
+      "get": {
+        "summary": "List Addresses for an Account",
+        "description": "Retrieves a list of addresses associated with the specified account. Addresses are used to receive funds and should be treated as single-use only to ensure optimal security and traceability.\n\n### Key Features:\n- Lists all addresses linked to a specific account, including their details and metadata.\n- Includes pagination support for large address lists.\n\n### Important Notes:\n- Each address should be used for only one transaction to maintain privacy and enhance fund tracking.\n- Requires the `wallet:addresses:read` permission.\n\n### Use Cases:\n- Retrieve historical or active addresses for a given account.\n- Audit account addresses for compliance or reporting purposes.\n\n### Example:\nUse this endpoint to display all receiving addresses for a cryptocurrency account.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account for which addresses need to be listed.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:addresses:read"]
+          }
+        ],
+        "tags": ["Addresses"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account for which addresses are to be retrieved.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of addresses associated with the specified account.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "pagination": {
+                  "$ref": "#/definitions/Pagination",
+                  "description": "Details about the pagination of the results."
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Address"
+                  },
+                  "description": "An array of address objects associated with the account."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a New Address for an Account",
+        "description": "Generates a new receiving address for the specified account. Addresses can be created for all account types, including fiat accounts. When used with fiat accounts, funds are received via Instant Exchange.\n\n### Key Features:\n- Allows the creation of new receive addresses on demand.\n- Supports adding an optional label for better address management.\n\n### Important Notes:\n- If no additional properties are provided, a generic address is created.\n- Addresses are generated securely and are unique to the account.\n- Requires the `wallet:addresses:create` permission.\n\n### Use Cases:\n- Create a new address for receiving cryptocurrency payments into a wallet.\n- Automate the creation of receive addresses for a dynamic payment system.\n\n### Example:\nSend a `POST` request with or without properties to create a new address for the account.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:addresses:create"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account for which a new address is to be created.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "address_properties",
+            "description": "Optional properties to customize the new address.",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "An optional label to assign to the new address for easy identification."
+                }
+              }
+            }
+          }
+        ],
+        "tags": ["Addresses"],
+        "responses": {
+          "201": {
+            "description": "A new address has been successfully created for the specified account.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/Address",
+                  "description": "Details of the newly created address."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/addresses/{address_id}": {
+      "get": {
+        "summary": "Retrieve Details for a Specific Address",
+        "description": "Fetches details of a specific address associated with a particular account. Addresses are unique identifiers used for receiving cryptocurrency transactions. Regular Bitcoin addresses can also be used in place of the `address_id`, provided the address is linked to the specified account.\n\n### Key Features:\n- Returns metadata and details about a single address.\n- Supports querying using the `address_id` or an actual cryptocurrency address (e.g., Bitcoin address) linked to the account.\n\n### Important Notes:\n- Each address should be treated as single-use to enhance security and ensure better tracking of funds.\n- Requires the `wallet:addresses:read` permission for access.\n- Ensure that the provided `address_id` or address is valid and belongs to the specified `account_id`.\n\n### Use Cases:\n- Retrieve detailed information about a specific address for auditing or reporting purposes.\n- Verify the ownership or validity of an address within an account.\n\n### Example:\nUse this endpoint to fetch the details of an address like its creation date, transaction history, and associated labels.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account that the address belongs to.\n- **address_id**: The unique identifier of the address to fetch details for.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:addresses:read"]
+          }
+        ],
+        "tags": ["Addresses"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account that the address is associated with.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "address_id",
+            "in": "path",
+            "description": "The unique identifier of the address to retrieve. Alternatively, a valid cryptocurrency address (e.g., Bitcoin address) can be used.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Details of the specified address associated with the account.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/Address",
+                  "description": "Object containing detailed information about the address."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/addresses/{address_id}/transactions": {
+      "get": {
+        "summary": "Retrieve Transactions for a Specific Address",
+        "description": "Fetches the list of all transactions associated with a particular cryptocurrency address within a specific account. Transactions include details of funds sent to or received by the address.\n\n### Key Features:\n- Lists all transactions tied to the specified address.\n- Supports querying using either the `address_id` or a valid cryptocurrency address (e.g., Bitcoin address), provided it is linked to the specified account.\n\n### Important Notes:\n- Ensure the `address_id` or cryptocurrency address is correctly linked to the specified `account_id`.\n- Transactions returned include metadata such as transaction hashes, timestamps, and amounts.\n- This endpoint requires the `wallet:transactions:read` permission.\n\n### Use Cases:\n- Audit transactions for a specific cryptocurrency address.\n- Retrieve a history of deposits and withdrawals for an address.\n- Analyze transaction trends or patterns for an address.\n\n### Example:\nUse this endpoint to view all incoming and outgoing transactions for a particular address within a user account, aiding in financial reporting or tracking.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account that the address belongs to.\n- **address_id**: The unique identifier of the address to fetch transactions for. Alternatively, a valid cryptocurrency address (e.g., Bitcoin address) may be used.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:transactions:read"]
+          }
+        ],
+        "tags": ["Addresses"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account containing the specified address.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "address_id",
+            "in": "path",
+            "description": "The unique identifier of the address to retrieve transactions for. Alternatively, a valid cryptocurrency address (e.g., Bitcoin address) can be used.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of transactions associated with the specified address.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "pagination": {
+                  "$ref": "#/definitions/Pagination",
+                  "description": "Pagination information for navigating through the list of transactions."
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Transaction",
+                    "description": "Details of each transaction linked to the specified address."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/transactions": {
+      "get": {
+        "summary": "Retrieve Transactions for an Account",
+        "description": "Fetches a list of all transactions associated with the specified account. Transactions include both incoming and outgoing payments, along with relevant metadata.\n\n### Key Features:\n- Lists all account transactions with pagination support.\n- Provides transaction details such as amounts, timestamps, and transaction statuses.\n- Useful for auditing account activity and generating transaction histories.\n\n### Example Use Cases:\n- View all transactions associated with a cryptocurrency wallet.\n- Fetch transaction details for reconciliation or reporting.\n- Analyze financial activity trends for a specific account.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account to retrieve transactions for.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:transactions:read"]
+          }
+        ],
+        "tags": ["Transactions"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account containing the transactions.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of transactions associated with the specified account.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "pagination": {
+                  "$ref": "#/definitions/Pagination",
+                  "description": "Pagination details for navigating through the transaction list."
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Transaction",
+                    "description": "Detailed information about each transaction."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Send or Request Money",
+        "description": "Allows users to either send funds to a recipient or request funds from a sender. Transactions can be on-chain (blockchain) or off-chain (Coinbase's internal ledger).\n\n### Sending Funds (type=\"send\"):\n- Funds can be sent to a cryptocurrency address or email.\n- Fees are covered by Coinbase for larger transactions (≥0.0001 BTC) up to 25 per day.\n- Supports instant exchange for fiat-to-crypto transfers if the user has buying privileges.\n\n### Requesting Funds (type=\"request\"):\n- Requests funds from a specified email address.\n- The recipient will receive an email notification with the request details.\n\n### Advanced Features:\n- **Idempotency Token**: Prevents duplicate transactions with the `idem` field.\n- **Fee Customization**: Allows users to specify transaction fees for smaller payments.\n- **Two-Factor Authentication (2FA)**: Required for OAuth2 authentication unless `wallet:transactions:send:bypass-2fa` scope is used.\n\n### Example Use Cases:\n- Send cryptocurrency payments to clients or friends.\n- Request funds from collaborators or customers.\n- Automate payments for services using this endpoint.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account to send or request money from.\n- **transaction_options**: The transaction details, including type, recipient, amount, and optional customizations.",
+        "security": [
+          {
+            "coinbaseAccessCode": [
+              "wallet:transactions:send",
+              "wallet:transactions:request"
+            ]
+          }
+        ],
+        "tags": ["Transactions"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account initiating the transaction.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "transaction_options",
+            "description": "Details of the transaction, including type (send/request), recipient, and optional customizations.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Specifies whether the transaction is a 'send' or 'request'."
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Recipient's Bitcoin address (send only) or email address (send/request)."
+                },
+                "amount": {
+                  "type": "string",
+                  "description": "The amount to be sent or requested."
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "The currency type for the transaction (e.g., BTC, ETH, USD)."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Notes or comments included with the transaction (optional)."
+                },
+                "skip_notifications": {
+                  "type": "boolean",
+                  "description": "(Send only) Suppresses email notifications for small transactions (e.g., tips)."
+                },
+                "fee": {
+                  "type": "string",
+                  "description": "(Send only) Custom transaction fee (optional). Defaults to Coinbase’s fee policy."
+                },
+                "idem": {
+                  "type": "string",
+                  "description": "(Send only) Idempotency token to prevent duplicate transactions. Maximum length: 100 characters."
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The newly created transaction is pending.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/Transaction",
+                  "description": "Details of the pending transaction."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/transactions/{transaction_id}": {
+      "get": {
+        "summary": "Retrieve Transaction Details",
+        "description": "Fetches detailed information about a specific transaction associated with an account. This endpoint is useful for viewing the status, amount, recipient, and other metadata of a transaction.\n\n### Key Features:\n- Provides comprehensive details about a specific transaction.\n- Supports on-chain and off-chain transactions.\n- Useful for auditing or reviewing the details of a transaction.\n\n### Example Use Cases:\n- View the recipient and amount of a specific cryptocurrency transaction.\n- Retrieve the status and metadata of a pending or completed transaction.\n- Audit the transaction history for compliance or reporting purposes.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account to which the transaction belongs.\n- **transaction_id**: The unique identifier of the transaction to retrieve.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:transactions:read"]
+          }
+        ],
+        "tags": ["Transactions"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account containing the transaction.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "description": "The unique identifier of the transaction to retrieve.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The detailed information of the requested transaction.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/Transaction",
+                  "description": "Detailed metadata and status of the transaction."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel Money Request",
+        "description": "Allows a user to cancel a pending money request. Money requests can be canceled by either the sender or the recipient.\n\n### Key Features:\n- Cancels a money request before it is accepted.\n- Applicable for both senders and recipients of the request.\n- Does not apply to completed transactions or those already fulfilled.\n\n### Example Use Cases:\n- The recipient declines a money request, and the sender wants to cancel it.\n- A sender cancels an unfulfilled money request they no longer need to process.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account containing the money request.\n- **transaction_id**: The unique identifier of the transaction to cancel.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:transactions:request"]
+          }
+        ],
+        "tags": ["Transactions"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account containing the transaction.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "description": "The unique identifier of the transaction to cancel.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success response indicating the money request was canceled successfully. (No content)"
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/transactions/{transaction_id}/complete": {
+      "post": {
+        "summary": "Complete Money Request",
+        "description": "Allows the recipient of a money request to complete the transaction by sending the requested amount to the user who initiated the request. This action can only be performed by the user to whom the money request was made. The user who sent the request cannot execute this endpoint.\n\n### Key Features:\n- Finalizes a pending money request by transferring funds to the requestor.\n- Ensures the transaction completes securely and only by the intended recipient.\n\n### Example Use Cases:\n- A recipient wants to fulfill a pending money request by transferring the requested amount.\n- Automates completing a request within a workflow for payment settlements.\n\n### Limitations:\n- Only the recipient of the money request can call this endpoint.\n- Does not apply to already completed or canceled requests.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account involved in the transaction.\n- **transaction_id**: The unique identifier of the pending money request to complete.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:transactions:request"]
+          }
+        ],
+        "tags": ["Transactions"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account initiating the completion of the money request.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "description": "The unique identifier of the transaction representing the money request.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The money request has been successfully completed. Funds have been transferred to the user who initiated the request."
+          },
+          "400": {
+            "description": "Bad request. This may occur if the transaction is not a valid money request or if the caller is not the recipient of the request."
+          },
+          "403": {
+            "description": "Forbidden. The user does not have the necessary permissions to complete the transaction."
+          },
+          "404": {
+            "description": "Transaction or account not found. This error occurs if the provided account or transaction ID does not exist."
+          }
+        }
+      }
+    },
+    "/accounts/{account_id}/transactions/{transaction_id}/resend": {
+      "post": {
+        "summary": "Resend Money Request",
+        "description": "Allows the user to resend a pending money request to the recipient. This action sends a new notification email to the recipient, reminding them about the outstanding request.\n\n### Key Features:\n- Sends a fresh email notification to the recipient of the money request.\n- Can be used to remind recipients of unresolved or delayed money requests.\n\n### Example Use Cases:\n- A user wants to follow up on a pending money request by sending another notification.\n- Automates reminders for outstanding money requests within a financial application.\n\n### Limitations:\n- Can only be used for active and pending money requests.\n- Does not apply to requests that have been canceled, completed, or expired.\n\n### Request Parameters:\n- **account_id**: The unique identifier of the account associated with the money request.\n- **transaction_id**: The unique identifier of the pending money request to be resent.",
+        "security": [
+          {
+            "coinbaseAccessCode": ["wallet:transactions:request"]
+          }
+        ],
+        "tags": ["Transactions"],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "description": "The unique identifier of the account associated with the money request.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "description": "The unique identifier of the transaction representing the money request.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The money request notification has been successfully resent. The recipient has been notified with a new email."
+          },
+          "400": {
+            "description": "Bad request. This may occur if the transaction is not a valid money request or if it is already completed or canceled."
+          },
+          "403": {
+            "description": "Forbidden. The user does not have the necessary permissions to resend the transaction notification."
+          },
+          "404": {
+            "description": "Transaction or account not found. This error occurs if the provided account or transaction ID does not exist."
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "coinbaseAccessCode": {
+      "type": "oauth2",
+      "scopes": {
+        "wallet:accounts:read": "List user’s accounts and their balances",
+        "wallet:accounts:update": "Update account (e.g. change name)",
+        "wallet:accounts:create": "Create a new account (e.g. BTC wallet)",
+        "wallet:accounts:delete": "Delete existing account",
+        "wallet:addresses:read": "List account’s bitcoin addresses",
+        "wallet:addresses:create": "Create new bitcoin addresses for wallets",
+        "wallet:buys:read": "List account’s buys",
+        "wallet:buys:create": "Buy bitcoin",
+        "wallet:checkouts:read": "List user’s merchant checkouts",
+        "wallet:checkouts:create": "Create a new merchant checkout",
+        "wallet:deposits:read": "List account’s deposits",
+        "wallet:deposits:create": "Create a new deposit",
+        "wallet:notifications:read": "List user’s notifications",
+        "wallet:orders:read": "List user’s merchant order",
+        "wallet:orders:create": "Create a new merchant order",
+        "wallet:orders:refund": "Refund a merchant order",
+        "wallet:payment-methods:read": "List user’s payment methods (e.g. bank accounts)",
+        "wallet:payment-methods:delete": "Remove existing payment methods",
+        "wallet:payment-methods:limits": "Get detailed limits for payment methods (useful for performing buys and sells). This permission is to be used together with wallet:payment-methods:read",
+        "wallet:sells:read": "List account’s sells",
+        "wallet:sells:create": "Sell bitcoin",
+        "wallet:transactions:read": "List account’s transactions",
+        "wallet:transactions:send": "Send bitcoin",
+        "wallet:transactions:request": "Request bitcoin from a Coinbase user",
+        "wallet:transactions:transfer": "Transfer funds between user’s two bitcoin accounts",
+        "wallet:user:read": "List detailed user information (public information is available without this permission)",
+        "wallet:user:update": "Update current user",
+        "wallet:user:email": "Read current user’s email address",
+        "wallet:withdrawals:read": "List account’s withdrawals",
+        "wallet:withdrawals:create": "Create a new withdrawal"
+      },
+      "flow": "accessCode",
+      "authorizationUrl": "https://www.coinbase.com/oauth/authorize",
+      "tokenUrl": "http://www.coinbase.com/oauth/token"
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "required": ["id", "avatar_url", "resource", "resource_path"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Resource ID"
+        },
+        "name": {
+          "type": ["string", "null"],
+          "description": "User’s public name"
+        },
+        "username": {
+          "type": ["string", "null"]
+        },
+        "profile_location": {
+          "type": ["string", "null"],
+          "description": "Location for user’s public profile"
+        },
+        "profile_bio": {
+          "type": ["string", "null"],
+          "description": "Bio for user’s public profile"
+        },
+        "profile_url": {
+          "type": ["string", "null"],
+          "description": "Public profile location if user has one"
+        },
+        "avatar_url": {
+          "type": "string",
+          "description": "User’s avatar url"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "resource_path": {
+          "type": "string"
+        }
+      }
+    },
+    "Pagination": {
+      "type": "object",
+      "properties": {
+        "ending_before": {
+          "type": ["integer", "null"]
+        },
+        "starting_after": {
+          "type": ["integer", "null"]
+        },
+        "limit": {
+          "type": ["integer", "null"]
+        },
+        "order": {
+          "type": ["string", "null"]
+        },
+        "previous_uri": {
+          "type": ["string", "null"]
+        },
+        "next_uri": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "MoneyHash": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        }
+      }
+    },
+    "Account": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Resource ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "User or system defined name"
+        },
+        "primary": {
+          "type": "boolean",
+          "description": "Indicates if this is a primary account"
+        },
+        "type": {
+          "type": "string",
+          "description": "Account’s type. Available values: wallet, fiat, multisig, vault, multisig_vault"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Account's currency"
+        },
+        "balance": {
+          "$ref": "#/definitions/MoneyHash"
+        },
+        "native_balance": {
+          "$ref": "#/definitions/MoneyHash"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Timestamp indicating when was the account created."
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "Timestamp indicating when was the account last updated."
+        },
+        "resource": {
+          "type": "string",
+          "description": "This value is always 'account'."
+        },
+        "resource_path": {
+          "type": "string"
+        }
+      }
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Resource ID"
+        },
+        "address": {
+          "type": "string",
+          "description": "Bitcoin address"
+        },
+        "name": {
+          "type": ["string", "null"],
+          "description": "User defined label for the address"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Timestamp indicating when was the address was created."
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "Timestamp indicating when was the address last updated."
+        },
+        "resource": {
+          "type": "string",
+          "description": "This value is always 'address'."
+        },
+        "resource_path": {
+          "type": "string"
+        }
+      }
+    },
+    "Transaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Resource ID"
+        },
+        "type": {
+          "type": "string",
+          "description": "Transaction type"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status"
+        },
+        "amount": {
+          "$ref": "#/definitions/MoneyHash"
+        },
+        "native_amount": {
+          "$ref": "#/definitions/MoneyHash"
+        },
+        "description": {
+          "type": ["string", "null"],
+          "description": "User defined description"
+        },
+        "instant_exchange": {
+          "type": "boolean",
+          "description": "Indicator if the transaction was instant exchanged (received into a bitcoin address for a fiat account)"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Timestamp indicating when was the address was created."
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "Timestamp indicating when was the address last updated."
+        },
+        "resource": {
+          "type": "string",
+          "description": "This value is always 'address'."
+        },
+        "resource_path": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object",
+          "description": "Detailed information about the transaction"
+        },
+        "network": {
+          "type": ["object", "null"],
+          "description": "Information about bitcoin network including network transaction hash if transaction was on-blockchain. Only available for certain types of transactions"
+        },
+        "to": {
+          "type": ["object", "null"],
+          "description": "The receiving party of a debit transaction. Usually another resource but can also be another type like email. Only available for certain types of transactions"
+        },
+        "from": {
+          "type": ["object", "null"],
+          "description": "The originating party of a credit transaction. Usually another resource but can also be another type like bitcoin network. Only available for certain types of transactions"
+        },
+        "address": {
+          "type": ["object", "null"],
+          "description": "Associated bitcoin address for received payment"
+        },
+        "application": {
+          "type": ["object", "null"],
+          "description": "Associated OAuth2 application"
+        }
+      }
+    }
+  }
+}
